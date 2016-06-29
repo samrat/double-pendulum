@@ -14,8 +14,8 @@
 #define HEIGHT 600
 
 float position[] = {
-     0.0f,  0.5f, // Vertex 1 (X, Y)
-     0.5f, -0.5f, // Vertex 2 (X, Y)
+     0.0f,  0.0f, // pivot
+     0.0f, -0.5f, // mass
 };
 
 GLuint lines_index[2];
@@ -121,7 +121,6 @@ rk4(vec2 current, float dt) {
 
 
 int main() {
-
   if (!glfwInit())
     return -1;
 
@@ -156,10 +155,21 @@ int main() {
   make_resources();
   g_gl_state.pause = false;
 
+  vec2 init = {.x = 0.2,
+               .y = 1.0};
+  vec2 current = init;
+  float dt = 0.05;
+  float radius = 0.5f;
   while (!glfwWindowShouldClose(window)) {
     if (!g_gl_state.pause) {
 
     }
+
+    current = rk4(current, dt);
+    // printf("%f %f\n", current.x, current.y);
+    position[2] = radius * sinf(current.x);
+    position[3] = -radius * cosf(current.x);
+
 
     glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER,
@@ -170,13 +180,4 @@ int main() {
     glfwPollEvents();
   }
 
-  vec2 init = {.x = 0,
-               .y = 0.5};
-  vec2 current = init;
-  float dt = 0.01;
-
-  for (int i = 0; i < 400; i++) {
-    current = rk4(current, dt);
-    printf("%f %f\n", current.x, current.y);
-  }
 }
