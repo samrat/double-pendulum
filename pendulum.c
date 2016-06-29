@@ -1,8 +1,18 @@
 #include <math.h>
 #include <stdio.h>
-#include "vec2.c"
+#include <stdlib.h>
 
-vec2 system(vec2 current) {
+#include <GL/gl3w.h>
+#include <GLFW/glfw3.h>
+
+#include "vec2.c"
+#include "util.c"
+
+#define WIDTH 800
+#define HEIGHT 600
+
+/* System of diffeqs that specifies how the pendulum moves */
+vec2 pendulum(vec2 current) {
   vec2 result;
 
   result.x = current.y;                 /* theta' = v */
@@ -24,10 +34,10 @@ rk4_weighted_avg(vec2 a, vec2 b, vec2 c, vec2 d) {
 /* Compute next step of autonomous differential equation. */
 vec2
 rk4(vec2 current, float dt) {
-  vec2 k1 = system(current);
-  vec2 k2 = system(vec2_add(current, vec2_scale(dt/2, k1)));
-  vec2 k3 = system(vec2_add(current, vec2_scale(dt/2, k2)));
-  vec2 k4 = system(vec2_add(current, vec2_scale(dt, k3)));
+  vec2 k1 = pendulum(current);
+  vec2 k2 = pendulum(vec2_add(current, vec2_scale(dt/2, k1)));
+  vec2 k3 = pendulum(vec2_add(current, vec2_scale(dt/2, k2)));
+  vec2 k4 = pendulum(vec2_add(current, vec2_scale(dt, k3)));
 
   vec2 k = rk4_weighted_avg(k1, k2, k3, k4);
 
