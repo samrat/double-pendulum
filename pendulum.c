@@ -12,6 +12,11 @@
 
 #define WIDTH 600
 #define HEIGHT 600
+#define TAIL_LENGTH 100
+
+float l1 = 1;
+float l2 = 0.5;
+
 
 float position[] = {
      0.0f,  0.0f, // pivot
@@ -19,12 +24,18 @@ float position[] = {
      0.0f, 0.7f,  // mass_2
 };
 
-GLuint lines_index[2];
+float tail1[TAIL_LENGTH][2];
+float tail2[TAIL_LENGTH][2];
+int tail_pos[TAIL_LENGTH];
 
 static struct {
-  GLuint vertex_buffer, index_buffer;
+  GLuint vertex_buffer, tail_index_buffer;
+
+  GLuint tail1_buffer;
 
   GLuint vertex_shader, fragment_shader, program;
+
+  GLuint tail_vertex_shader, tail_fragment_shader, tail_program;
 
   struct {
     struct {
@@ -32,6 +43,16 @@ static struct {
     } attributes;
 
   } mass;
+
+  struct {
+    struct {
+      GLuint position;
+    } attributes;
+
+    struct {
+      GLuint color;
+    } uniforms;
+  } tail;
 
   /* double xpos, ypos; */
 
@@ -47,9 +68,12 @@ make_resources() {
   g_gl_state.vertex_buffer = make_buffer(GL_ARRAY_BUFFER,
                                          position,
                                          sizeof(position));
-  g_gl_state.index_buffer  = make_buffer(GL_ELEMENT_ARRAY_BUFFER,
-                                         lines_index,
-                                         sizeof(lines_index));
+  g_gl_state.tail1_buffer = make_buffer(GL_ARRAY_BUFFER,
+                                      tail1,
+                                      sizeof(tail1));
+  g_gl_state.tail_index_buffer = make_buffer(GL_ELEMENT_ARRAY_BUFFER,
+                                             tail_pos,
+                                             sizeof(tail_pos));
 
   /* Compile GLSL program  */
   g_gl_state.vertex_shader = make_shader(GL_VERTEX_SHADER,
@@ -59,9 +83,23 @@ make_resources() {
   g_gl_state.program = make_program(g_gl_state.vertex_shader,
                                     g_gl_state.fragment_shader);
 
+
+  g_gl_state.tail_vertex_shader = make_shader(GL_VERTEX_SHADER,
+                                              "tail.vert");
+  g_gl_state.tail_fragment_shader = make_shader(GL_FRAGMENT_SHADER,
+                                                "tail.frag");
+  g_gl_state.tail_program = make_program(g_gl_state.tail_vertex_shader,
+                                         g_gl_state.tail_fragment_shader);
+
   /* Look up shader variable locations */
   g_gl_state.mass.attributes.position =
     glGetAttribLocation(g_gl_state.program, "position");
+
+  g_gl_state.tail.attributes.position =
+    glGetAttribLocation(g_gl_state.tail_program, "position");
+
+  g_gl_state.tail.uniforms.color =
+    glGetUniformLocation(g_gl_state.tail_program, "color");
 
   return 1;
 }
@@ -74,6 +112,9 @@ render(GLFWwindow *window) {
   glUseProgram(g_gl_state.program);
 
   glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.vertex_buffer);
+  glBufferData(GL_ARRAY_BUFFER,
+               sizeof(position), position, GL_DYNAMIC_DRAW);
+
   glEnableVertexAttribArray(g_gl_state.mass.attributes.position);
   glVertexAttribPointer(g_gl_state.mass.attributes.position,
                         2, GL_FLOAT, GL_FALSE,
@@ -85,8 +126,44 @@ render(GLFWwindow *window) {
                         2, GL_FLOAT, GL_FALSE,
                         0, (GLvoid*)(2*sizeof(float)));
   glDrawArrays(GL_POINTS, 0, 2);
-
   glDisableVertexAttribArray(g_gl_state.mass.attributes.position);
+
+  /* Tail 1 */
+  glUseProgram(g_gl_state.tail_program);
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_gl_state.tail_index_buffer);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+               sizeof(tail_pos), tail_pos, GL_DYNAMIC_DRAW);
+
+  glUniform1f(g_gl_state.tail.uniforms.color,
+              0.1f);
+  glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.tail1_buffer);
+  glBufferData(GL_ARRAY_BUFFER,
+               sizeof(tail1), tail1, GL_DYNAMIC_DRAW);
+  glEnableVertexAttribArray(g_gl_state.tail.attributes.position);
+  glVertexAttribPointer(g_gl_state.mass.attributes.position,
+                        2, GL_FLOAT, GL_FALSE,
+                        0, 0);
+  // glDrawArrays(GL_LINE_STRIP, 0, TAIL_LENGTH);
+  glDrawElements(GL_LINE_STRIP,
+                 TAIL_LENGTH,
+                 GL_UNSIGNED_INT,
+                 0);
+
+  /* Tail 2 */
+  glUniform1f(g_gl_state.tail.uniforms.color,
+              0.5f);
+  glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.tail1_buffer);
+  glBufferData(GL_ARRAY_BUFFER,
+               sizeof(tail2), tail2, GL_DYNAMIC_DRAW);
+  glEnableVertexAttribArray(g_gl_state.tail.attributes.position);
+  glVertexAttribPointer(g_gl_state.mass.attributes.position,
+                        2, GL_FLOAT, GL_FALSE,
+                        0, 0);
+  glDrawElements(GL_LINE_STRIP,
+                 TAIL_LENGTH,
+                 GL_UNSIGNED_INT,
+                 0);
 
   glfwSwapBuffers(window);
 }
@@ -97,8 +174,6 @@ vec4 pendulum(vec4 current) {
 
   float m1 = 1;
   float m2 = 1;
-  float l1 = 1;
-  float l2 = 1;
   float g = 9.8f;
 
   float th1 = current.x;
@@ -189,26 +264,37 @@ int main() {
                .w = 2.0};
   vec4 current = init;
   float dt = 0.01;
-  float radius = 0.4f;
+  float scale = 0.4f;
+
+  int tail_index = 0;
+
+  for (int i = 0; i < TAIL_LENGTH; i++)
+    tail_pos[i] = i;
+
   while (!glfwWindowShouldClose(window)) {
     if (!g_gl_state.pause) {
 
     }
 
     current = rk4(current, dt);
-    // printf("%f %f\n", current.x, current.y);
-    position[2] = radius * sinf(current.x);
-    position[3] = -radius * cosf(current.x);
 
-    position[4] = radius*(sinf(current.x) + sinf(current.z));
-    position[5] = -radius*(cosf(current.x) + cosf(current.z));
+    position[2] = scale * l1 * sinf(current.x);
+    position[3] = -scale * l1 * cosf(current.x);
+    tail1[tail_index][0] = position[2];
+    tail1[tail_index][1] = position[3];
 
-    printf("%f %f\n", position[2], position[3]);
+    position[4] = scale*(l1*sinf(current.x) + l2*sinf(current.z));
+    position[5] = -scale*(l1*cosf(current.x) + l2*cosf(current.z));
+    tail2[tail_index][0] = position[4];
+    tail2[tail_index][1] = position[5];
 
+    tail_index = (tail_index + 1) % TAIL_LENGTH;
 
-    glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(position), position, GL_DYNAMIC_DRAW);
+    /* Shift indices for line strip. 0th element needs to point to
+       latest point, and so forth. Otherwise you'll see a loop. */
+    for (int i = 0; i < TAIL_LENGTH; i++) {
+      tail_pos[i] = (tail_index + i) % TAIL_LENGTH;
+    }
 
     render(window);
 
