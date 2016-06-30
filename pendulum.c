@@ -6,7 +6,7 @@
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 
-#include "vec2.c"
+#include "vec4.c"
 #include "util.c"
 #include "glutils.c"
 
@@ -15,7 +15,8 @@
 
 float position[] = {
      0.0f,  0.0f, // pivot
-     0.0f, -0.5f, // mass
+     0.0f, -0.5f, // mass_1
+     0.0f, 0.7f,  // mass_2
 };
 
 GLuint lines_index[2];
@@ -77,13 +78,13 @@ render(GLFWwindow *window) {
   glVertexAttribPointer(g_gl_state.mass.attributes.position,
                         2, GL_FLOAT, GL_FALSE,
                         0, 0);
-  glDrawArrays(GL_LINES, 0, 2);
+  glDrawArrays(GL_LINE_STRIP, 0, 3);
 
   glPointSize(16.0f);
   glVertexAttribPointer(g_gl_state.mass.attributes.position,
                         2, GL_FLOAT, GL_FALSE,
                         0, (GLvoid*)(2*sizeof(float)));
-  glDrawArrays(GL_POINTS, 0, 1);
+  glDrawArrays(GL_POINTS, 0, 2);
 
   glDisableVertexAttribArray(g_gl_state.mass.attributes.position);
 
@@ -91,37 +92,57 @@ render(GLFWwindow *window) {
 }
 
 /* System of diffeqs that specifies how the pendulum moves */
-vec2 pendulum(vec2 current) {
-  vec2 result;
+vec4 pendulum(vec4 current) {
+  vec4 result;
 
-  result.x = current.y;                 /* theta' = v */
-  /* v' = -sin(theta) - b*v*/
-  result.y = -sinf(current.x) - 0.3*current.y;
+  float m1 = 1;
+  float m2 = 1;
+  float l1 = 1;
+  float l2 = 1;
+  float g = 9.8f;
+
+  float th1 = current.x;
+  float v1 = current.y;
+  float th2 = current.z;
+  float v2 = current.w;
+
+  float del = th2 - th1; /* del = theta_2 - theta_1 */
+
+  float den1 = (m1+m2)*l1 - m2*l1*cosf(del)*cosf(del);
+
+  result.x = v1;                 /* theta' = v */
+  result.y = (m2*l1*v1*v1*sinf(del)*cosf(del) + m2*g*sinf(th2)*cosf(del) + m2*l2*v2*v2*sinf(del) - (m1+m2)*g*sinf(th1)) / den1;
+
+  float den2 = (m1+m2)*l2 - m2*l2*cosf(del)*cosf(del);
+  result.z = v2;
+  result.w = (-m2*l2*v2*v2*sinf(del)*cosf(del) + (m1+m2)*(g*sinf(th1)*cosf(del) - l1*v1*v1*sinf(del) - g*sinf(th2))) / den2;
 
   return result;
 }
 
-vec2
-rk4_weighted_avg(vec2 a, vec2 b, vec2 c, vec2 d) {
-  vec2 result;
+vec4
+rk4_weighted_avg(vec4 a, vec4 b, vec4 c, vec4 d) {
+  vec4 result;
 
   result.x = (a.x + 2*b.x + 2*c.x + d.x) / 6.0;
   result.y = (a.y + 2*b.y + 2*c.y + d.y) / 6.0;
+  result.z = (a.z + 2*b.z + 2*c.z + d.z) / 6.0;
+  result.w = (a.w + 2*b.w + 2*c.w + d.w) / 6.0;
 
   return result;
 }
 
 /* Compute next step of autonomous differential equation. */
-vec2
-rk4(vec2 current, float dt) {
-  vec2 k1 = pendulum(current);
-  vec2 k2 = pendulum(vec2_add(current, vec2_scale(dt/2, k1)));
-  vec2 k3 = pendulum(vec2_add(current, vec2_scale(dt/2, k2)));
-  vec2 k4 = pendulum(vec2_add(current, vec2_scale(dt, k3)));
+vec4
+rk4(vec4 current, float dt) {
+  vec4 k1 = pendulum(current);
+  vec4 k2 = pendulum(vec4_add(current, vec4_scale(dt/2, k1)));
+  vec4 k3 = pendulum(vec4_add(current, vec4_scale(dt/2, k2)));
+  vec4 k4 = pendulum(vec4_add(current, vec4_scale(dt, k3)));
 
-  vec2 k = rk4_weighted_avg(k1, k2, k3, k4);
+  vec4 k = rk4_weighted_avg(k1, k2, k3, k4);
 
-  vec2 result = vec2_add(current, vec2_scale(dt, k));
+  vec4 result = vec4_add(current, vec4_scale(dt, k));
 
   return result;
 }
@@ -162,11 +183,13 @@ int main() {
   make_resources();
   g_gl_state.pause = false;
 
-  vec2 init = {.x = 2.8,
-               .y = -1.2};
-  vec2 current = init;
-  float dt = 0.05;
-  float radius = 0.7f;
+  vec4 init = {.x = 2.8,
+               .y = -1.2,
+               .z = 0.1,
+               .w = 2.0};
+  vec4 current = init;
+  float dt = 0.01;
+  float radius = 0.4f;
   while (!glfwWindowShouldClose(window)) {
     if (!g_gl_state.pause) {
 
@@ -176,6 +199,9 @@ int main() {
     // printf("%f %f\n", current.x, current.y);
     position[2] = radius * sinf(current.x);
     position[3] = -radius * cosf(current.x);
+
+    position[4] = radius*(sinf(current.x) + sinf(current.z));
+    position[5] = -radius*(cosf(current.x) + cosf(current.z));
 
     printf("%f %f\n", position[2], position[3]);
 
