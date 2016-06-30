@@ -10,7 +10,7 @@
 #include "util.c"
 #include "glutils.c"
 
-#define WIDTH 800
+#define WIDTH 600
 #define HEIGHT 600
 
 float position[] = {
@@ -79,6 +79,12 @@ render(GLFWwindow *window) {
                         0, 0);
   glDrawArrays(GL_LINES, 0, 2);
 
+  glPointSize(16.0f);
+  glVertexAttribPointer(g_gl_state.mass.attributes.position,
+                        2, GL_FLOAT, GL_FALSE,
+                        0, (GLvoid*)(2*sizeof(float)));
+  glDrawArrays(GL_POINTS, 0, 1);
+
   glDisableVertexAttribArray(g_gl_state.mass.attributes.position);
 
   glfwSwapBuffers(window);
@@ -89,7 +95,8 @@ vec2 pendulum(vec2 current) {
   vec2 result;
 
   result.x = current.y;                 /* theta' = v */
-  result.y = -sinf(current.x);          /* v' = -sin(theta) */
+  /* v' = -sin(theta) - b*v*/
+  result.y = -sinf(current.x) - 0.3*current.y;
 
   return result;
 }
@@ -155,11 +162,11 @@ int main() {
   make_resources();
   g_gl_state.pause = false;
 
-  vec2 init = {.x = 0.2,
-               .y = 1.0};
+  vec2 init = {.x = 2.8,
+               .y = -1.2};
   vec2 current = init;
   float dt = 0.05;
-  float radius = 0.5f;
+  float radius = 0.7f;
   while (!glfwWindowShouldClose(window)) {
     if (!g_gl_state.pause) {
 
@@ -169,6 +176,8 @@ int main() {
     // printf("%f %f\n", current.x, current.y);
     position[2] = radius * sinf(current.x);
     position[3] = -radius * cosf(current.x);
+
+    printf("%f %f\n", position[2], position[3]);
 
 
     glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.vertex_buffer);
