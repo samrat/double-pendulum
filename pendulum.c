@@ -31,7 +31,8 @@ int tail_pos[TAIL_LENGTH];
 static struct {
   GLuint vertex_buffer, tail_index_buffer;
 
-  GLuint tail1_buffer;
+  /* Same buffer is used for both tails */
+  GLuint tail_buffer;
 
   GLuint vertex_shader, fragment_shader, program;
 
@@ -68,9 +69,9 @@ make_resources() {
   g_gl_state.vertex_buffer = make_buffer(GL_ARRAY_BUFFER,
                                          position,
                                          sizeof(position));
-  g_gl_state.tail1_buffer = make_buffer(GL_ARRAY_BUFFER,
-                                      tail1,
-                                      sizeof(tail1));
+  g_gl_state.tail_buffer = make_buffer(GL_ARRAY_BUFFER,
+                                       tail1,
+                                       sizeof(tail1));
   g_gl_state.tail_index_buffer = make_buffer(GL_ELEMENT_ARRAY_BUFFER,
                                              tail_pos,
                                              sizeof(tail_pos));
@@ -137,7 +138,7 @@ render(GLFWwindow *window) {
 
   glUniform1f(g_gl_state.tail.uniforms.color,
               0.1f);
-  glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.tail1_buffer);
+  glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.tail_buffer);
   glBufferData(GL_ARRAY_BUFFER,
                sizeof(tail1), tail1, GL_DYNAMIC_DRAW);
   glEnableVertexAttribArray(g_gl_state.tail.attributes.position);
@@ -153,7 +154,7 @@ render(GLFWwindow *window) {
   /* Tail 2 */
   glUniform1f(g_gl_state.tail.uniforms.color,
               0.5f);
-  glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.tail1_buffer);
+  glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.tail_buffer);
   glBufferData(GL_ARRAY_BUFFER,
                sizeof(tail2), tail2, GL_DYNAMIC_DRAW);
   glEnableVertexAttribArray(g_gl_state.tail.attributes.position);
