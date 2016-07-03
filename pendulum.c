@@ -59,7 +59,7 @@ static struct {
 
   /* mouse_button button; */
 
-  bool pause;
+  bool pause, draw_tails;
 
 } g_gl_state;
 
@@ -129,43 +129,44 @@ render(GLFWwindow *window) {
   glDrawArrays(GL_POINTS, 0, 2);
   glDisableVertexAttribArray(g_gl_state.mass.attributes.position);
 
-  /* Tail 1 */
-  glUseProgram(g_gl_state.tail_program);
+  if (g_gl_state.draw_tails) {
+    /* Tail 1 */
+    glUseProgram(g_gl_state.tail_program);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_gl_state.tail_index_buffer);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               sizeof(tail_pos), tail_pos, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_gl_state.tail_index_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 sizeof(tail_pos), tail_pos, GL_DYNAMIC_DRAW);
 
-  glUniform1f(g_gl_state.tail.uniforms.color,
-              0.1f);
-  glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.tail_buffer);
-  glBufferData(GL_ARRAY_BUFFER,
-               sizeof(tail1), tail1, GL_DYNAMIC_DRAW);
-  glEnableVertexAttribArray(g_gl_state.tail.attributes.position);
-  glVertexAttribPointer(g_gl_state.mass.attributes.position,
-                        2, GL_FLOAT, GL_FALSE,
-                        0, 0);
-  // glDrawArrays(GL_LINE_STRIP, 0, TAIL_LENGTH);
-  glDrawElements(GL_LINE_STRIP,
-                 TAIL_LENGTH,
-                 GL_UNSIGNED_INT,
-                 0);
+    glUniform1f(g_gl_state.tail.uniforms.color,
+                0.1f);
+    glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.tail_buffer);
+    glBufferData(GL_ARRAY_BUFFER,
+                 sizeof(tail1), tail1, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(g_gl_state.tail.attributes.position);
+    glVertexAttribPointer(g_gl_state.mass.attributes.position,
+                          2, GL_FLOAT, GL_FALSE,
+                          0, 0);
+    // glDrawArrays(GL_LINE_STRIP, 0, TAIL_LENGTH);
+    glDrawElements(GL_LINE_STRIP,
+                   TAIL_LENGTH,
+                   GL_UNSIGNED_INT,
+                   0);
 
-  /* Tail 2 */
-  glUniform1f(g_gl_state.tail.uniforms.color,
-              0.5f);
-  glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.tail_buffer);
-  glBufferData(GL_ARRAY_BUFFER,
-               sizeof(tail2), tail2, GL_DYNAMIC_DRAW);
-  glEnableVertexAttribArray(g_gl_state.tail.attributes.position);
-  glVertexAttribPointer(g_gl_state.mass.attributes.position,
-                        2, GL_FLOAT, GL_FALSE,
-                        0, 0);
-  glDrawElements(GL_LINE_STRIP,
-                 TAIL_LENGTH,
-                 GL_UNSIGNED_INT,
-                 0);
-
+    /* Tail 2 */
+    glUniform1f(g_gl_state.tail.uniforms.color,
+                0.5f);
+    glBindBuffer(GL_ARRAY_BUFFER, g_gl_state.tail_buffer);
+    glBufferData(GL_ARRAY_BUFFER,
+                 sizeof(tail2), tail2, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(g_gl_state.tail.attributes.position);
+    glVertexAttribPointer(g_gl_state.mass.attributes.position,
+                          2, GL_FLOAT, GL_FALSE,
+                          0, 0);
+    glDrawElements(GL_LINE_STRIP,
+                   TAIL_LENGTH,
+                   GL_UNSIGNED_INT,
+                   0);
+  }
   glfwSwapBuffers(window);
 }
 
@@ -223,6 +224,22 @@ rk4(vec4 current, float dt) {
   return result;
 }
 
+void
+key_callback(GLFWwindow *window, int key,
+             int scancode, int action, int mods) {
+  if (action == GLFW_RELEASE) {
+    switch(key) {
+    case GLFW_KEY_T: {
+      g_gl_state.draw_tails = !g_gl_state.draw_tails;
+    } break;
+
+    case GLFW_KEY_P: {
+      g_gl_state.pause = !g_gl_state.pause;
+    } break;
+
+    }
+  }
+}
 
 int main() {
   if (!glfwInit())
@@ -247,6 +264,8 @@ int main() {
   /* Make the window's context current */
   glfwMakeContextCurrent(window);
 
+  glfwSetKeyCallback(window, key_callback);
+
   if (gl3wInit() != 0) {
     fprintf(stderr, "GL3W: failed to initialize\n");
     return 1;
@@ -258,6 +277,7 @@ int main() {
 
   make_resources();
   g_gl_state.pause = false;
+  g_gl_state.draw_tails = false;
 
   vec4 init = {.x = 2.8,
                .y = -1.2,
@@ -273,8 +293,10 @@ int main() {
     tail_pos[i] = i;
 
   while (!glfwWindowShouldClose(window)) {
-    if (!g_gl_state.pause) {
+    glfwPollEvents();
 
+    if (g_gl_state.pause) {
+      continue;
     }
 
     current = rk4(current, dt);
@@ -299,7 +321,6 @@ int main() {
 
     render(window);
 
-    glfwPollEvents();
   }
 
 }
