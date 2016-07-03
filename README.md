@@ -11,3 +11,5 @@ Demo of a
 
 ## Usage
 Run `make`. Then run `./pen`.
+
+Press `t` to toggle the "tail", and `p` to pause/unpause the simulation.
