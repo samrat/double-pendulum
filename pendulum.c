@@ -2,21 +2,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
+
+#define MAX_VERTEX_BUFFER 512 * 1024
+#define MAX_ELEMENT_BUFFER 128 * 102
+
+#define NK_INCLUDE_FIXED_TYPES
+#define NK_INCLUDE_STANDARD_IO
+#define NK_INCLUDE_DEFAULT_ALLOCATOR
+#define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
+#define NK_INCLUDE_FONT_BAKING
+#define NK_INCLUDE_DEFAULT_FONT
+#define NK_IMPLEMENTATION
+#define NK_GLFW_GL3_IMPLEMENTATION
+#include "nuklear.h"
+#include "nuklear_glfw_gl3.h"
+
 
 #include "vec4.c"
 #include "util.c"
 #include "glutils.c"
 
-#define WIDTH 600
-#define HEIGHT 600
+#define WIDTH 700
+#define HEIGHT 700
 #define TAIL_LENGTH 100
 
 float l1 = 1;
 float l2 = 0.5;
 
+float m1 = 1;
+float m2 = 1;
 
 float position[] = {
      0.0f,  0.0f, // pivot
@@ -63,6 +81,8 @@ static struct {
 
 } g_gl_state;
 
+GLuint g_vao;
+
 static int
 make_resources() {
   /* Create buffers */
@@ -107,8 +127,9 @@ make_resources() {
 
 static void
 render(GLFWwindow *window) {
-  glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
+  /* glClearColor(0.1f, 0.1f, 0.1f, 1.0f); */
+  /* glClear(GL_COLOR_BUFFER_BIT); */
+  glBindVertexArray(g_vao);
 
   glUseProgram(g_gl_state.program);
 
@@ -167,6 +188,7 @@ render(GLFWwindow *window) {
                    GL_UNSIGNED_INT,
                    0);
   }
+  nk_glfw3_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
   glfwSwapBuffers(window);
 }
 
@@ -174,8 +196,6 @@ render(GLFWwindow *window) {
 vec4 pendulum(vec4 current) {
   vec4 result;
 
-  float m1 = 1;
-  float m2 = 1;
   float g = 9.8f;
 
   float th1 = current.x;
@@ -237,6 +257,21 @@ key_callback(GLFWwindow *window, int key,
       g_gl_state.pause = !g_gl_state.pause;
     } break;
 
+    /* case GLFW_KEY_L: { */
+    /*   l2 += 0.1; */
+    /* } break; */
+
+    /* case GLFW_KEY_S: { */
+    /*   l2 -= 0.1; */
+    /* } break; */
+
+    /* case GLFW_KEY_H: { */
+    /*   m2 += 0.5; */
+    /* } break; */
+
+    /* case GLFW_KEY_G: { */
+    /*   m2 -= 0.5; */
+    /* } break; */
     }
   }
 }
@@ -244,6 +279,10 @@ key_callback(GLFWwindow *window, int key,
 int main() {
   if (!glfwInit())
     return -1;
+
+  struct nk_context *ctx;
+  struct nk_color background;
+
 
   glfwWindowHint(GLFW_SAMPLES, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -271,9 +310,23 @@ int main() {
     return 1;
   }
 
-  GLuint vao;
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
+  ctx = nk_glfw3_init(window, NK_GLFW3_INSTALL_CALLBACKS);
+
+  /* Load Fonts: if none of these are loaded a default font will be used  */
+  {struct nk_font_atlas *atlas;
+    nk_glfw3_font_stash_begin(&atlas);
+    /*struct nk_font *droid = nk_font_atlas_add_from_file(atlas, "../../../extra_font/DroidSans.ttf", 14, 0);*/
+    /*struct nk_font *roboto = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Roboto-Regular.ttf", 14, 0);*/
+    /*struct nk_font *future = nk_font_atlas_add_from_file(atlas, "../../../extra_font/kenvector_future_thin.ttf", 13, 0);*/
+    /*struct nk_font *clean = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyClean.ttf", 12, 0);*/
+    /*struct nk_font *tiny = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyTiny.ttf", 10, 0);*/
+    /*struct nk_font *cousine = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Cousine-Regular.ttf", 13, 0);*/
+    nk_glfw3_font_stash_end();
+    /*nk_style_set_font(ctx, &droid->handle);*/}
+
+  background = nk_rgb(28,48,62);
+
+  glGenVertexArrays(1, &g_vao);
 
   make_resources();
   g_gl_state.pause = false;
@@ -292,9 +345,41 @@ int main() {
   for (int i = 0; i < TAIL_LENGTH; i++)
     tail_pos[i] = i;
 
+  int width, height;
+  width = WIDTH;
+  height = HEIGHT;
+  glViewport(0, 0, width, height);
+
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
+    nk_glfw3_new_frame();
 
+    /* GUI */
+    {struct nk_panel layout;
+        if (nk_begin(ctx, &layout, "Double Pendulum", nk_rect(50, 50, 230, 250),
+            NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
+            NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
+        {
+            nk_layout_row_static(ctx, 30, 100, 1);
+            if (nk_button_label(ctx, "Toggle tail", NK_BUTTON_DEFAULT))
+              g_gl_state.draw_tails = !g_gl_state.draw_tails;
+
+            nk_layout_row_dynamic(ctx, 25, 1);
+            nk_property_float(ctx, "L1:", 0, &l1, 100, 0.1, 1);
+
+            nk_layout_row_dynamic(ctx, 25, 1);
+            nk_property_float(ctx, "L2:", 0, &l2, 100, 0.1, 1);
+
+            nk_layout_row_dynamic(ctx, 25, 1);
+            nk_property_float(ctx, "M1:", 0, &m1, 100, 0.1, 1);
+
+            nk_layout_row_dynamic(ctx, 25, 1);
+            nk_property_float(ctx, "M2:", 0, &m2, 100, 0.1, 1);
+
+        }
+        nk_end(ctx);}
+
+    /* Simulation */
     if (g_gl_state.pause) {
       continue;
     }
@@ -319,8 +404,16 @@ int main() {
       tail_pos[i] = (tail_index + i) % TAIL_LENGTH;
     }
 
+    float bg[4];
+    nk_color_fv(bg, background);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(bg[0], bg[1], bg[2], bg[3]);
+
     render(window);
 
   }
 
+  nk_glfw3_shutdown();
+  glfwTerminate();
+  return 0;
 }
