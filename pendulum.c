@@ -147,6 +147,9 @@ render(GLFWwindow *window) {
   glDisableVertexAttribArray(g_gl_state.mass.attributes.position);
 
   if (g_gl_state.draw_tails) {
+    /* TODO: There is an edge case at the start when the tail buffer
+       isn't fully populated. To fix this, we'll have to draw only
+       part of the tail length. */
     /* Tail 1 */
     glUseProgram(g_gl_state.tail_program);
 
@@ -163,7 +166,6 @@ render(GLFWwindow *window) {
     glVertexAttribPointer(g_gl_state.mass.attributes.position,
                           2, GL_FLOAT, GL_FALSE,
                           0, 0);
-    // glDrawArrays(GL_LINE_STRIP, 0, TAIL_LENGTH);
     glDrawElements(GL_LINE_STRIP,
                    TAIL_LENGTH,
                    GL_UNSIGNED_INT,
