@@ -351,21 +351,21 @@ int main() {
             // th2 = current.z;
             // v2 = current.w;
 
-            nk_layout_row_static(ctx, 30, 120, 2);
+            nk_layout_row_static(ctx, 30, 100, 2);
             snprintf(buf, 128, "th1 = %f", current.x);
             nk_label(ctx, buf, NK_TEXT_LEFT);
 
             snprintf(buf, 256, "v1 = %f", current.y);
             nk_label(ctx, buf, NK_TEXT_LEFT);
 
-            nk_layout_row_static(ctx, 30, 120, 2);
+            nk_layout_row_static(ctx, 30, 100, 2);
             snprintf(buf, 256, "th2 = %f", current.z);
             nk_label(ctx, buf, NK_TEXT_LEFT);
 
             snprintf(buf, 256, "v2 = %f", current.w);
             nk_label(ctx, buf, NK_TEXT_LEFT);
 
-            nk_layout_row_static(ctx, 30, 100, 2);
+            nk_layout_row_dynamic(ctx, 30, 2);
             if (nk_button_label(ctx,
                                 g_gl_state.pause ? "Resume" : "Pause",
                                 NK_BUTTON_DEFAULT))
