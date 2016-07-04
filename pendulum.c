@@ -357,7 +357,7 @@ int main() {
     /* GUI */
     {
       struct nk_panel layout;
-        if (nk_begin(ctx, &layout, "Double Pendulum", nk_rect(50, 50, 230, 250),
+        if (nk_begin(ctx, &layout, "Double Pendulum", nk_rect(50, 50, 230, 280),
             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
             NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
           {
@@ -370,16 +370,16 @@ int main() {
               g_gl_state.draw_tails = !g_gl_state.draw_tails;
 
             nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_float(ctx, "L1:", 0.01, &l1, 100, 0.1, 1);
+            nk_property_float(ctx, "L1:", 0.001, &l1, 2, 0.01, 0.01);
 
             nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_float(ctx, "L2:", 0.01, &l2, 100, 0.1, 1);
+            nk_property_float(ctx, "L2:", 0.001, &l2, 2, 0.01, 0.01);
 
             nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_float(ctx, "M1:", 0.01, &m1, 100, 0.1, 1);
+            nk_property_float(ctx, "M1:", 0.01, &m1, 100, 0.1, 0.5);
 
             nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_float(ctx, "M2:", 0.01, &m2, 100, 0.1, 1);
+            nk_property_float(ctx, "M2:", 0.01, &m2, 100, 0.1, 0.5);
 
           }
         nk_end(ctx);
