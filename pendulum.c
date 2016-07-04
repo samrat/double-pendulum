@@ -355,7 +355,8 @@ int main() {
     nk_glfw3_new_frame();
 
     /* GUI */
-    {struct nk_panel layout;
+    {
+      struct nk_panel layout;
         if (nk_begin(ctx, &layout, "Double Pendulum", nk_rect(50, 50, 230, 250),
             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
             NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
@@ -369,19 +370,20 @@ int main() {
               g_gl_state.draw_tails = !g_gl_state.draw_tails;
 
             nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_float(ctx, "L1:", 0, &l1, 100, 0.1, 1);
+            nk_property_float(ctx, "L1:", 0.01, &l1, 100, 0.1, 1);
 
             nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_float(ctx, "L2:", 0, &l2, 100, 0.1, 1);
+            nk_property_float(ctx, "L2:", 0.01, &l2, 100, 0.1, 1);
 
             nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_float(ctx, "M1:", 0, &m1, 100, 0.1, 1);
+            nk_property_float(ctx, "M1:", 0.01, &m1, 100, 0.1, 1);
 
             nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_float(ctx, "M2:", 0, &m2, 100, 0.1, 1);
+            nk_property_float(ctx, "M2:", 0.01, &m2, 100, 0.1, 1);
 
           }
-        nk_end(ctx);}
+        nk_end(ctx);
+    }
 
     /* Simulation */
     if (!g_gl_state.pause) {
