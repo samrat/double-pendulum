@@ -315,10 +315,10 @@ int main() {
   g_gl_state.pause = false;
   g_gl_state.draw_tails = false;
 
-  vec4 init = {.x = 2.8,
-               .y = -1.2,
-               .z = 0.1,
-               .w = 2.0};
+  vec4 init = {.x = 0,
+               .y = 0,
+               .z = 0.0,
+               .w = 0.1};
   vec4 current = init;
   float dt = 0.01;
   float scale = 0.4f;
@@ -333,6 +333,8 @@ int main() {
   height = HEIGHT;
   glViewport(0, 0, width, height);
 
+  char buf[128];
+
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
     nk_glfw3_new_frame();
@@ -344,13 +346,31 @@ int main() {
             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
             NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
           {
+            // th1 = current.x;
+            // v1 = current.y;
+            // th2 = current.z;
+            // v2 = current.w;
+
+            nk_layout_row_static(ctx, 30, 120, 2);
+            snprintf(buf, 128, "th1 = %f", current.x);
+            nk_label(ctx, buf, NK_TEXT_LEFT);
+
+            snprintf(buf, 256, "v1 = %f", current.y);
+            nk_label(ctx, buf, NK_TEXT_LEFT);
+
+            nk_layout_row_static(ctx, 30, 120, 2);
+            snprintf(buf, 256, "th2 = %f", current.z);
+            nk_label(ctx, buf, NK_TEXT_LEFT);
+
+            snprintf(buf, 256, "v2 = %f", current.w);
+            nk_label(ctx, buf, NK_TEXT_LEFT);
+
             nk_layout_row_static(ctx, 30, 100, 2);
             if (nk_button_label(ctx,
                                 g_gl_state.pause ? "Resume" : "Pause",
                                 NK_BUTTON_DEFAULT))
               g_gl_state.pause = !g_gl_state.pause;
 
-            // nk_layout_row_static(ctx, 30, 100, 1);
             if (nk_button_label(ctx, "Toggle tail", NK_BUTTON_DEFAULT))
               g_gl_state.draw_tails = !g_gl_state.draw_tails;
 
@@ -370,10 +390,10 @@ int main() {
             nk_property_float(ctx, "L2:", 0.001, &l2, 2, 0.01, 0.01);
 
             nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_float(ctx, "M1:", 0.01, &m1, 100, 0.1, 0.5);
+            nk_property_float(ctx, "M1:", 0.05, &m1, 100, 0.1, 0.5);
 
             nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_float(ctx, "M2:", 0.01, &m2, 100, 0.1, 0.5);
+            nk_property_float(ctx, "M2:", 0.05, &m2, 100, 0.1, 0.5);
 
           }
         nk_end(ctx);
