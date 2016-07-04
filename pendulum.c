@@ -73,10 +73,6 @@ static struct {
     } uniforms;
   } tail;
 
-  /* double xpos, ypos; */
-
-  /* mouse_button button; */
-
   bool pause, draw_tails;
 
 } g_gl_state;
@@ -257,21 +253,6 @@ key_callback(GLFWwindow *window, int key,
       g_gl_state.pause = !g_gl_state.pause;
     } break;
 
-    /* case GLFW_KEY_L: { */
-    /*   l2 += 0.1; */
-    /* } break; */
-
-    /* case GLFW_KEY_S: { */
-    /*   l2 -= 0.1; */
-    /* } break; */
-
-    /* case GLFW_KEY_H: { */
-    /*   m2 += 0.5; */
-    /* } break; */
-
-    /* case GLFW_KEY_G: { */
-    /*   m2 -= 0.5; */
-    /* } break; */
     }
   }
 }
@@ -357,17 +338,28 @@ int main() {
     /* GUI */
     {
       struct nk_panel layout;
-        if (nk_begin(ctx, &layout, "Double Pendulum", nk_rect(50, 50, 230, 280),
+        if (nk_begin(ctx, &layout, "Double Pendulum", nk_rect(50, 50, 230, 300),
             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
             NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
           {
-            nk_layout_row_static(ctx, 30, 80, 1);
-            if (nk_button_label(ctx, "Pause", NK_BUTTON_DEFAULT))
+            nk_layout_row_static(ctx, 30, 100, 2);
+            if (nk_button_label(ctx,
+                                g_gl_state.pause ? "Resume" : "Pause",
+                                NK_BUTTON_DEFAULT))
               g_gl_state.pause = !g_gl_state.pause;
 
-            nk_layout_row_static(ctx, 30, 100, 1);
+            // nk_layout_row_static(ctx, 30, 100, 1);
             if (nk_button_label(ctx, "Toggle tail", NK_BUTTON_DEFAULT))
               g_gl_state.draw_tails = !g_gl_state.draw_tails;
+
+            nk_layout_row_static(ctx, 30, 150, 1);
+            if (nk_button_label(ctx, "Reset simulation", NK_BUTTON_DEFAULT)) {
+              current.x = init.x;
+              current.y = init.y;
+              current.z = init.z;
+              current.w = init.w;
+            }
+
 
             nk_layout_row_dynamic(ctx, 25, 1);
             nk_property_float(ctx, "L1:", 0.001, &l1, 2, 0.01, 0.01);
