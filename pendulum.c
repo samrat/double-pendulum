@@ -359,7 +359,11 @@ int main() {
         if (nk_begin(ctx, &layout, "Double Pendulum", nk_rect(50, 50, 230, 250),
             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
             NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
-        {
+          {
+            nk_layout_row_static(ctx, 30, 80, 1);
+            if (nk_button_label(ctx, "Pause", NK_BUTTON_DEFAULT))
+              g_gl_state.pause = !g_gl_state.pause;
+
             nk_layout_row_static(ctx, 30, 100, 1);
             if (nk_button_label(ctx, "Toggle tail", NK_BUTTON_DEFAULT))
               g_gl_state.draw_tails = !g_gl_state.draw_tails;
@@ -376,27 +380,27 @@ int main() {
             nk_layout_row_dynamic(ctx, 25, 1);
             nk_property_float(ctx, "M2:", 0, &m2, 100, 0.1, 1);
 
-        }
+          }
         nk_end(ctx);}
 
     /* Simulation */
-    if (g_gl_state.pause) {
-      continue;
+    if (!g_gl_state.pause) {
+      current = rk4(current, dt);
+
+      position[2] = scale * l1 * sinf(current.x);
+      position[3] = -scale * l1 * cosf(current.x);
+      tail1[tail_index][0] = position[2];
+      tail1[tail_index][1] = position[3];
+
+      position[4] = scale*(l1*sinf(current.x) + l2*sinf(current.z));
+      position[5] = -scale*(l1*cosf(current.x) + l2*cosf(current.z));
+      tail2[tail_index][0] = position[4];
+      tail2[tail_index][1] = position[5];
+
+      tail_index = (tail_index + 1) % TAIL_LENGTH;
+
     }
 
-    current = rk4(current, dt);
-
-    position[2] = scale * l1 * sinf(current.x);
-    position[3] = -scale * l1 * cosf(current.x);
-    tail1[tail_index][0] = position[2];
-    tail1[tail_index][1] = position[3];
-
-    position[4] = scale*(l1*sinf(current.x) + l2*sinf(current.z));
-    position[5] = -scale*(l1*cosf(current.x) + l2*cosf(current.z));
-    tail2[tail_index][0] = position[4];
-    tail2[tail_index][1] = position[5];
-
-    tail_index = (tail_index + 1) % TAIL_LENGTH;
 
     /* Shift indices for line strip. 0th element needs to point to
        latest point, and so forth. Otherwise you'll see a loop. */
