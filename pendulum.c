@@ -398,21 +398,19 @@ int main() {
     /* Simulation */
     if (!g_gl_state.pause) {
       current = rk4(current, dt);
-
-      position[2] = scale * l1 * sinf(current.x);
-      position[3] = -scale * l1 * cosf(current.x);
-      tail1[tail_index][0] = position[2];
-      tail1[tail_index][1] = position[3];
-
-      position[4] = scale*(l1*sinf(current.x) + l2*sinf(current.z));
-      position[5] = -scale*(l1*cosf(current.x) + l2*cosf(current.z));
-      tail2[tail_index][0] = position[4];
-      tail2[tail_index][1] = position[5];
-
-      tail_index = (tail_index + 1) % TAIL_LENGTH;
-
     }
 
+    position[2] = scale * l1 * sinf(current.x);
+    position[3] = -scale * l1 * cosf(current.x);
+    tail1[tail_index][0] = position[2];
+    tail1[tail_index][1] = position[3];
+
+    position[4] = scale*(l1*sinf(current.x) + l2*sinf(current.z));
+    position[5] = -scale*(l1*cosf(current.x) + l2*cosf(current.z));
+    tail2[tail_index][0] = position[4];
+    tail2[tail_index][1] = position[5];
+
+    tail_index = (tail_index + 1) % TAIL_LENGTH;
 
     /* Shift indices for line strip. 0th element needs to point to
        latest point, and so forth. Otherwise you'll see a loop. */
