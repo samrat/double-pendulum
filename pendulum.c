@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <float.h>
 
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
@@ -333,8 +334,6 @@ int main() {
   height = HEIGHT;
   glViewport(0, 0, width, height);
 
-  char buf[128];
-
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
     nk_glfw3_new_frame();
@@ -351,19 +350,16 @@ int main() {
             // th2 = current.z;
             // v2 = current.w;
 
-            nk_layout_row_static(ctx, 30, 100, 2);
-            snprintf(buf, 128, "th1 = %f", current.x);
-            nk_label(ctx, buf, NK_TEXT_LEFT);
+            nk_layout_row_dynamic(ctx, 25, 2);
+            nk_property_float(ctx, "th1:", -FLT_MAX, &current.x, FLT_MAX, 0.01, 0.01);
 
-            snprintf(buf, 256, "v1 = %f", current.y);
-            nk_label(ctx, buf, NK_TEXT_LEFT);
+            nk_property_float(ctx, "v1:", -FLT_MAX, &current.y, FLT_MAX, 0.01, 0.01);
 
-            nk_layout_row_static(ctx, 30, 100, 2);
-            snprintf(buf, 256, "th2 = %f", current.z);
-            nk_label(ctx, buf, NK_TEXT_LEFT);
 
-            snprintf(buf, 256, "v2 = %f", current.w);
-            nk_label(ctx, buf, NK_TEXT_LEFT);
+            nk_layout_row_dynamic(ctx, 25, 2);
+            nk_property_float(ctx, "th2:", -FLT_MAX, &current.z, FLT_MAX, 0.01, 0.01);
+
+            nk_property_float(ctx, "v2:", -FLT_MAX, &current.w, FLT_MAX, 0.01, 0.01);
 
             nk_layout_row_dynamic(ctx, 30, 2);
             if (nk_button_label(ctx,
